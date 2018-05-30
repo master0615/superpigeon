@@ -1,0 +1,20 @@
+*.pyc
+# Logs and databases #
+######################
+*.log
+*.sql
+*.sqlite
+*.idea/*
+web/log*
+migrations
+
+# OS generated files #
+######################
+.DS_Store
+.DS_Store?
+.Spotlight-V100
+.Trashes
+
+web/reports/
+web/env/
+/docker/data

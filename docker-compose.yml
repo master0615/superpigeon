@@ -1,0 +1,96 @@
+version: '3.4'
+services:
+  mysql:
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: mysql
+      MYSQL_DATABASE: mysql
+      MYSQL_USER: mysql
+      MYSQL_PASSWORD: mysql
+    image: mysql:5
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./docker/data/mysql:/var/lib/mysql
+
+  redis:
+    restart: always
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./docker/data/redis:/data
+
+  rabbit:
+    image: "rabbitmq:3-management"
+    hostname: "rabbit"
+    environment:
+      RABBITMQ_ERLANG_COOKIE: "SWQOKODSQALRPCLNMEQG"
+      RABBITMQ_DEFAULT_USER: "rabbitmq"
+      RABBITMQ_DEFAULT_PASS: "rabbitmq"
+      RABBITMQ_DEFAULT_VHOST: "/"
+    ports:
+      - 15672:15672
+      - 5672:5672
+    labels:
+      NAME: "rabbitmq"
+
+  client:
+    build: ./client
+    image: ${COMPOSE_PROJECT_NAME}client:${BUILD_TAG:-latest}
+    env_file: .env
+    volumes:
+      - ./client:/opt/app/client
+    command: ["/opt/app/client/entrypoint.sh"]
+
+  web:
+    restart: always
+    build: ./web/
+    image: ${COMPOSE_PROJECT_NAME}web:${BUILD_TAG:-latest}
+    depends_on:
+      - rabbit
+      - mysql
+      - redis
+    links:
+      - mysql:mysql
+      - redis:redis
+      - rabbit:rabbit
+    volumes:
+      - ./web:/opt/app/web
+    env_file: .env
+    environment:
+      DEBUG: 'true'
+    command: ["/opt/app/web/wait-for.sh", "-t", "30", "mysql:3306", "--", "/opt/app/web/entrypoint.sh"]
+
+  worker:
+    restart: always
+    build: ./web/
+    image: ${COMPOSE_PROJECT_NAME}worker:${BUILD_TAG:-latest}
+    depends_on:
+      - rabbit
+      - mysql
+      - redis
+    links:
+      - mysql:mysql
+      - redis:redis
+      - rabbit:rabbit
+    volumes:
+      - ./web:/opt/app/web
+    env_file: .env
+    environment:
+      DEBUG: 'true'
+    command: ["/opt/app/web/wait-for.sh", "-t", "30", "rabbit:5672", "--", "python", "manage.py", "celery", "worker"]
+
+  nginx:
+    restart: always
+    build: ./docker/nginx/
+    image: ${COMPOSE_PROJECT_NAME}nginx:${BUILD_TAG:-latest}
+    command: ["/wait-for.sh", "-t", "30", "web:8001", "--", "/wait-for.sh", "-t", "30", "client:8000", "--", "nginx", "-g", "daemon off;"]
+    ports:
+      - 80:80
+    depends_on:
+      - web
+      - client
+    links:
+      - web
+      - client

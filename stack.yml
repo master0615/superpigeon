@@ -1,0 +1,88 @@
+version: '3.4'
+services:
+  mysql:
+    env_file:
+      - .env
+    image: mysql:5
+    volumes:
+      - mysql:/var/lib/mysql
+    networks:
+      - default
+
+  redis:
+    image: redis:latest
+    volumes:
+      - redis:/data
+    networks:
+      - default
+
+  rabbit:
+    image: "rabbitmq:3-management"
+    env_file:
+      - .env
+    volumes:
+      - rabbitmq:/var/lib/rabbitmq
+    networks:
+      - default
+
+  client:
+    image: ${BUILD_NAME}client:${BUILD_TAG:-latest}
+    env_file: .env
+    command: ["/opt/app/client/entrypoint.sh"]
+    networks:
+      - default
+
+  web:
+    image: ${BUILD_NAME}web:${BUILD_TAG:-latest}
+    depends_on:
+      - rabbit
+      - mysql
+      - redis
+    env_file: .env
+    environment:
+      DEBUG: 'true'
+    command: ["/opt/app/web/entrypoint.sh"]
+    networks:
+      - default
+      - proxy
+
+  worker:
+    image: ${BUILD_NAME}worker:${BUILD_TAG:-latest}
+    depends_on:
+      - rabbit
+      - mysql
+      - redis
+    env_file: .env
+    environment:
+      DEBUG: 'true'
+    command: ["python", "manage.py", "celery", "worker"]
+    networks:
+      - default
+      - proxy
+
+  nginx:
+    image: ${BUILD_NAME}nginx:${BUILD_TAG:-latest}
+    ports:
+      - :80
+    depends_on:
+      - web
+      - client
+    deploy:
+      labels:
+        - com.df.notify=true
+        - com.df.port=80
+        - com.df.serviceDomain=${DOMAIN_PREFIX}.super.datepalm.media,${DOMAIN_PREFIX}.super-api.datepalm.media
+    networks:
+      - default
+      - proxy
+
+volumes:
+  mysql:
+  redis:
+  rabbitmq:
+
+networks:
+  default:
+    external: false
+  proxy:
+    external: true
