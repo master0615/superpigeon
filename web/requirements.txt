@@ -64,7 +64,7 @@ futures==2.2.0
 geocoder==1.33.0
 gunicorn==19.7.1
 hashids==1.2.0
-httplib2==0.10.3
+httplib2==0.18.0
 hyperlink==17.3.1
 idna==2.6
 incremental==17.5.0
