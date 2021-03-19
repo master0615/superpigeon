@@ -54,7 +54,7 @@ django-simple-captcha==0.5.5
 django-tinymce==2.3.0
 django-user-agents==0.3.2
 django-wysiwyg==0.7.1
-djangorestframework==3.7.3
+djangorestframework==3.11.2
 djorm-ext-pgfulltext==0.10
 easy-thumbnails==2.4.1
 enum34==1.1.6
