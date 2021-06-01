@@ -120,7 +120,7 @@ typing==3.6.2
 ua-parser==0.7.3
 unicodecsv==0.14.1
 uritemplate==3.0.0
-urllib3==1.22
+urllib3==1.26.5
 user-agents==1.1.0
 vine==1.1.4
 whois==0.7
