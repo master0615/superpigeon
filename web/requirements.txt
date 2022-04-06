@@ -114,7 +114,7 @@ standardjson==0.3.1
 tablib==0.12.1
 timeutils==0.3.2
 tqdm==4.19.4
-Twisted==16.4.1
+Twisted==22.2.0
 txaio==2.8.2
 typing==3.6.2
 ua-parser==0.7.3
